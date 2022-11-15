@@ -185,6 +185,31 @@ void ControllerManager::HandleEvents()
 			case SDL_CONTROLLERAXISMOTION:
 				ControllerEvent(event.caxis.which);
 				break;
+                        case SDL_CONTROLLERTOUCHPADDOWN:
+                        case SDL_CONTROLLERTOUCHPADMOTION:
+                        case SDL_CONTROLLERTOUCHPADUP:
+                                SDL_Log("Controller %d touchpad %d finger %d %s %.2f, %.2f, %.2f\n",
+                                    event.ctouchpad.which,
+                                    event.ctouchpad.touchpad,
+                                    event.ctouchpad.finger,
+                                    (event.type == SDL_CONTROLLERTOUCHPADDOWN ? "pressed at" :
+                                    (event.type == SDL_CONTROLLERTOUCHPADUP ? "released at" :
+                                    "moved to")),
+                                    event.ctouchpad.x,
+                                    event.ctouchpad.y,
+                                    event.ctouchpad.pressure);
+				ControllerEvent(event.ctouchpad.which);
+                                break;
+                        case SDL_CONTROLLERSENSORUPDATE:
+                                SDL_Log("Controller %d sensor %s: %.2f, %.2f, %.2f\n",
+                                    event.csensor.which,
+                                    event.csensor.sensor == SDL_SENSOR_ACCEL ? "accelerometer" :
+                                    event.csensor.sensor == SDL_SENSOR_GYRO ? "gyro" : "unknown",
+                                    event.csensor.data[0],
+                                    event.csensor.data[1],
+                                    event.csensor.data[2]);
+				ControllerEvent(event.csensor.which);
+                                break;				
 		}
 	}
 #endif
