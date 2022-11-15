@@ -118,6 +118,7 @@ ControllerManager::ControllerManager(QObject *parent)
 	connect(timer, &QTimer::timeout, this, &ControllerManager::HandleEvents);
 	timer->start(UPDATE_INTERVAL_MS);
 #endif
+	chiaki_orientation_tracker_init(&orient_tracker);
 
 	UpdateAvailableControllers();
 }
@@ -366,17 +367,21 @@ ChiakiControllerState Controller::GetState()
 	
 	float gyro_data[3];
 	SDL_GameControllerGetSensorData(controller, SDL_SENSOR_GYRO, &gyro_data[0], 3);
-	state.gyro_x = gyro_data[0];
-	state.gyro_y = gyro_data[1];
-	state.gyro_z = gyro_data[2];
 
 	float accel_data[3];
 	SDL_GameControllerGetSensorData(controller, SDL_SENSOR_ACCEL, &accel_data[0], 3);
-	state.accel_x = accel_data[0];
-	state.accel_y = accel_data[1];
-	state.accel_z = accel_data[2];
+
+	chiaki_orientation_tracker_update(&orient_tracker,
+		gyro_data[0], gyro_data[1], gyro_data[2],
+		accel_data[0], accel_data[1], accel_data[2],
+		time(NULL));
+
+	chiaki_orientation_tracker_apply_to_controller_state(&orient_tracker, &state);
 	
-	SDL_Log("Controller gyro: x:%.2f, y:%.2f, z:%.2f, accel: x:%.2f, y:%.2f, z:%.2f", state.gyro_x, state.gyro_y, state.gyro_z, state.accel_x, state.accel_y, state.accel_z);
+	SDL_Log("Controller gyro: x:%.2f, y:%.2f, z:%.2f, accel: x:%.2f, y:%.2f, z:%.2f, orient: x:%.2f, y:%.2f, z:%.2f",
+				state.gyro_x, state.gyro_y, state.gyro_z,
+				state.accel_x, state.accel_y, state.accel_z
+				state.orient_x, state.orient_y, state.orient_z);
 
 #endif
 	return state;
