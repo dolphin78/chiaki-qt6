@@ -345,8 +345,10 @@ void StreamSession::SendFeedbackState()
 
 	for(auto controller : controllers)
 	{
-		auto controller_state = controller->GetState();
-		chiaki_controller_state_or(&state, &state, &controller_state);
+		state = controller->GetState();
+		break;
+		// auto controller_state = controller->GetState();
+		// chiaki_controller_state_or(&state, &state, &controller_state);
 	}
 
 	chiaki_controller_state_or(&state, &state, &keyboard_state);
