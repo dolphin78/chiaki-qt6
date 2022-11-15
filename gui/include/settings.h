@@ -8,7 +8,7 @@
 #include "host.h"
 
 #include <QSettings>
-#include <QAudioDeviceInfo>
+#include <QAudioDevice>
 
 enum class ControllerButtonExt
 {
