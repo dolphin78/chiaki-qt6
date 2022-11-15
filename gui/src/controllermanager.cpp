@@ -359,8 +359,8 @@ ChiakiControllerState Controller::GetState()
 	
 	//SDL_Log("Controller state %d,  x:%.2f, y:%.2f, pressure:%.2f\n", touch_state, x, y, pressure);
 	
-	state.touches[0].x = x * 1914;
-	state.touches[0].y = y * 940;
+	state.touches[0].x = x * 1920;
+	state.touches[0].y = y * 1080;
 	state.touches[0].id = touch_state - 1;
 	
 	//SDL_GameControllerGetSensorData(SDL_GameController *gamecontroller, SDL_SensorType type, float *data, int num_values);
@@ -372,9 +372,9 @@ ChiakiControllerState Controller::GetState()
 	SDL_GameControllerGetSensorData(controller, SDL_SENSOR_ACCEL, &accel_data[0], 3);
 
 	chiaki_orientation_tracker_update(&orient_tracker,
-		gyro_data[0], gyro_data[1], gyro_data[2],
-		accel_data[0], accel_data[1], accel_data[2],
-		time(NULL));
+		gyro_data[0] / 9.8f, gyro_data[1] / 9.8f , gyro_data[2] / 9.8f,
+		accel_data[0]/ 9.8f, accel_data[1]/ 9.8f, accel_data[2] / 9.8f,
+		time(NULL) * 1000);
 
 	chiaki_orientation_tracker_apply_to_controller_state(&orient_tracker, &state);
 	
