@@ -361,13 +361,13 @@ ChiakiControllerState Controller::GetState()
 	//SDL_GameControllerGetSensorData(SDL_GameController *gamecontroller, SDL_SensorType type, float *data, int num_values);
 	
 	float gyro_data[3];
-	SDL_GameControllerGetSensorData(controller, SDL_SENSOR_GYRO, &gyro_data, 3);
+	SDL_GameControllerGetSensorData(controller, SDL_SENSOR_GYRO, &gyro_data[0], 3);
 	state.gyro_x = gyro_data[0];
 	state.gyro_y = gyro_data[1];
 	state.gyro_z = gyro_data[2];
 
 	float accel_data[3];
-	SDL_GameControllerGetSensorData(controller, SDL_SENSOR_ACCEL, &accel_data, 3);
+	SDL_GameControllerGetSensorData(controller, SDL_SENSOR_ACCEL, &accel_data[0], 3);
 	state.accel_x = accel_data[0];
 	state.accel_y = accel_data[1];
 	state.accel_z = accel_data[2];
