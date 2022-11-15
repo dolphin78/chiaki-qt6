@@ -356,21 +356,28 @@ ChiakiControllerState Controller::GetState()
 	// int SDL_GameControllerGetTouchpadFinger(SDL_GameController *gamecontroller, int touchpad, int finger, Uint8 *state, float *x, float *y, float *pressure);
 	SDL_GameControllerGetTouchpadFinger(controller, 0, 0, &touch_state, &x, &y, &pressure);
 	
-        SDL_Log("Controller state %d,  x:%.2f, y:%.2f, pressure:%.2f\n", touch_state, x, y, pressure);
+        //SDL_Log("Controller state %d,  x:%.2f, y:%.2f, pressure:%.2f\n", touch_state, x, y, pressure);
+	
+	state.touches[0].x = x * 1914;
+	state.touches[0].y = y * 940;
+	state.touches[0].id = state - 1;
 	
 	//SDL_GameControllerGetSensorData(SDL_GameController *gamecontroller, SDL_SensorType type, float *data, int num_values);
 	
 	float gyro_data[3];
 	SDL_GameControllerGetSensorData(controller, SDL_SENSOR_GYRO, &gyro_data[0], 3);
-	state.gyro_x = gyro_data[0];
-	state.gyro_y = gyro_data[1];
-	state.gyro_z = gyro_data[2];
+	state.gyro_x = gyro_data[0] * 128;
+	state.gyro_y = gyro_data[1] * 128;
+	state.gyro_z = gyro_data[2] * 128;
 
 	float accel_data[3];
 	SDL_GameControllerGetSensorData(controller, SDL_SENSOR_ACCEL, &accel_data[0], 3);
-	state.accel_x = accel_data[0];
-	state.accel_y = accel_data[1];
-	state.accel_z = accel_data[2];
+	state.accel_x = accel_data[0] * 128;
+	state.accel_y = accel_data[1] * 128;
+	state.accel_z = accel_data[2] * 128;
+	
+        //SDL_Log("Controller gyro: x:%.2f, y:%.2f, z:%.2f, accel: x:%.2f, y:%.2f, z:%.2f", state.gyro_x, state.gyro_y, state.gyro_z, state.accel_x, state.accel_y, state.accel_z);
+
 #endif
 	return state;
 }
