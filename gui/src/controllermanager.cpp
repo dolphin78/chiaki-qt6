@@ -232,6 +232,10 @@ Controller::Controller(int device_id, ControllerManager *manager) : QObject(mana
 		if(SDL_JoystickGetDeviceInstanceID(i) == device_id)
 		{
 			controller = SDL_GameControllerOpen(i);
+                        SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS4_RUMBLE, "1");
+                        SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS5, "1");
+			SDL_GameControllerSetSensorEnabled(controller, SDL_SENSOR_ACCEL, SDL_TRUE);
+                        SDL_GameControllerSetSensorEnabled(controller, SDL_SENSOR_GYRO, SDL_TRUE);
 			break;
 		}
 	}
