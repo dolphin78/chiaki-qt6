@@ -111,7 +111,7 @@ SettingsDialog::SettingsDialog(Settings *settings, QWidget *parent) : QDialog(pa
 
 	// do this async because it's slow, assuming availableDevices() is thread-safe
 	auto audio_devices_future = QtConcurrent::run([]() {
-		return QMediaDevices::availableDevices(QAudio::AudioOutput);
+		return QMediaDevices::audioOutputs();
 	});
 	auto audio_devices_future_watcher = new QFutureWatcher<QList<QAudioDevice>>(this);
 	connect(audio_devices_future_watcher, &QFutureWatcher<QList<QAudioDevice>>::finished, this, [this, audio_devices_future_watcher, settings]() {
