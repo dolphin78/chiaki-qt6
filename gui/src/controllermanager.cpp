@@ -372,14 +372,14 @@ ChiakiControllerState Controller::GetState()
 	SDL_GameControllerGetSensorData(controller, SDL_SENSOR_ACCEL, &accel_data[0], 3);
 
 	chiaki_orientation_tracker_update(&orient_tracker,
-		gyro_data[0], gyro_data[1], gyro_data[2],
-		accel_data[0], accel_data[1], accel_data[2],
+		gyro_data[0] / 9.8f, gyro_data[1] / 9.8f , gyro_data[2] / 9.8f,
+		accel_data[0] / 9.8f, accel_data[1] / 9.8f, accel_data[2] / 9.8f,
 		time(NULL) * 1000);
 
-	SDL_Log("(1) Controller gyro: x:%.2f, y:%.2f, z:%.2f, accel: x:%.2f, y:%.2f, z:%.2f, orient: x:%.2f, y:%.2f, z:%.2f, w:%.2f",
+	SDL_Log("(1) Controller gyro: x:%.2f, y:%.2f, z:%.2f, accel: x:%.2f, y:%.2f, z:%.2f, orient: x:%.2f, y:%.2f, z:%.2f, w:%.2f, idx: %d",
 				orient_tracker.gyro_x, orient_tracker.gyro_y, orient_tracker.gyro_z,
 				orient_tracker.accel_x, orient_tracker.accel_y, orient_tracker.accel_z,
-				orient_tracker.orient.x, orient_tracker.orient.y, orient_tracker.orient.z, orient_tracker.orient.w);
+				orient_tracker.orient.x, orient_tracker.orient.y, orient_tracker.orient.z, orient_tracker.orient.w, orient_tracker.sample_index);
 
 	chiaki_orientation_tracker_apply_to_controller_state(&orient_tracker, &state);
 	
