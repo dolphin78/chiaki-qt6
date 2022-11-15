@@ -20,7 +20,6 @@
 #include <QLineEdit>
 #include <QtConcurrent>
 #include <QFutureWatcher>
-#include <QMediaDevices>
 
 #include <chiaki/config.h>
 #include <chiaki/ffmpegdecoder.h>
@@ -70,6 +69,11 @@ SettingsDialog::SettingsDialog(Settings *settings, QWidget *parent) : QDialog(pa
 	log_verbose_check_box->setChecked(settings->GetLogVerbose());
 	connect(log_verbose_check_box, &QCheckBox::stateChanged, this, &SettingsDialog::LogVerboseChanged);
 
+	dualsense_check_box = new QCheckBox(this);
+	general_layout->addRow(tr("DualSense Support:\nEnable haptics and adaptive triggers\nfor attached DualSense controllers.\nThis is currently experimental."), dualsense_check_box);
+	dualsense_check_box->setChecked(settings->GetDualSenseEnabled());
+	connect(dualsense_check_box, &QCheckBox::stateChanged, this, &SettingsDialog::DualSenseChanged);
+
 	auto log_directory_label = new QLineEdit(GetLogBaseDir(), this);
 	log_directory_label->setReadOnly(true);
 	general_layout->addRow(tr("Log Directory:"), log_directory_label);
@@ -105,40 +109,16 @@ SettingsDialog::SettingsDialog(Settings *settings, QWidget *parent) : QDialog(pa
 	});
 
 	// do this async because it's slow, assuming availableDevices() is thread-safe
-	// auto audio_devices_future = QtConcurrent::run([]() {
-	// 	return QAudioDeviceInfo::availableDevices(QAudio::AudioOutput);
-	// });
-	// auto audio_devices_future_watcher = new QFutureWatcher<QList<QAudioDeviceInfo>>(this);
-	// connect(audio_devices_future_watcher, &QFutureWatcher<QList<QAudioDeviceInfo>>::finished, this, [this, audio_devices_future_watcher, settings]() {
-	// 	auto available_devices = audio_devices_future_watcher->result();
-	// 	while(audio_device_combo_box->count() > 1) // remove all but "Auto"
-	// 		audio_device_combo_box->removeItem(1);
-	// 	for(QAudioDeviceInfo di : available_devices)
-	// 		audio_device_combo_box->addItem(di.deviceName(), di.deviceName());
-	// 	int audio_out_device_index = audio_device_combo_box->findData(settings->GetAudioOutDevice());
-	// 	audio_device_combo_box->setCurrentIndex(audio_out_device_index < 0 ? 0 : audio_out_device_index);
-	// });
-	// audio_devices_future_watcher->setFuture(audio_devices_future);
-	// general_layout->addRow(tr("Audio Output Device:"), audio_device_combo_box);
-
-	// auto about_button = new QPushButton(tr("About Chiaki"), this);
-	// general_layout->addRow(about_button);
-	// connect(about_button, &QPushButton::clicked, this, [this]() {
-	// 	QMessageBox::about(this, tr("About Chiaki"), about_string);
-	// });
-
-	// do this async because it's slow, assuming availableDevices() is thread-safe
-	// QT6 test
 	auto audio_devices_future = QtConcurrent::run([]() {
-		return QMediaDevices::audioOutputs();
+		return QAudioDeviceInfo::availableDevices(QAudio::AudioOutput);
 	});
-	auto audio_devices_future_watcher = new QFutureWatcher<QList<QAudioDevice>>(this);
-	connect(audio_devices_future_watcher, &QFutureWatcher<QList<QAudioDevice>>::finished, this, [this, audio_devices_future_watcher, settings]() {
+	auto audio_devices_future_watcher = new QFutureWatcher<QList<QAudioDeviceInfo>>(this);
+	connect(audio_devices_future_watcher, &QFutureWatcher<QList<QAudioDeviceInfo>>::finished, this, [this, audio_devices_future_watcher, settings]() {
 		auto available_devices = audio_devices_future_watcher->result();
 		while(audio_device_combo_box->count() > 1) // remove all but "Auto"
 			audio_device_combo_box->removeItem(1);
-		for(QAudioDevice &di : available_devices)
-			audio_device_combo_box->addItem(di.description(), di.description());
+		for(QAudioDeviceInfo di : available_devices)
+			audio_device_combo_box->addItem(di.deviceName(), di.deviceName());
 		int audio_out_device_index = audio_device_combo_box->findData(settings->GetAudioOutDevice());
 		audio_device_combo_box->setCurrentIndex(audio_out_device_index < 0 ? 0 : audio_out_device_index);
 	});
@@ -345,6 +325,11 @@ void SettingsDialog::DisconnectActionSelected()
 void SettingsDialog::LogVerboseChanged()
 {
 	settings->SetLogVerbose(log_verbose_check_box->isChecked());
+}
+
+void SettingsDialog::DualSenseChanged()
+{
+	settings->SetDualSenseEnabled(dualsense_check_box->isChecked());
 }
 
 void SettingsDialog::FPSSelected()

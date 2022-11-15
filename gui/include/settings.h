@@ -8,8 +8,7 @@
 #include "host.h"
 
 #include <QSettings>
-#include <QAudioDevice>
-//#include <QAudioDeviceInfo>
+#include <QAudioDeviceInfo>
 
 enum class ControllerButtonExt
 {
@@ -63,6 +62,9 @@ class Settings : public QObject
 		bool GetLogVerbose() const 				{ return settings.value("settings/log_verbose", false).toBool(); }
 		void SetLogVerbose(bool enabled)		{ settings.setValue("settings/log_verbose", enabled); }
 		uint32_t GetLogLevelMask();
+
+		bool GetDualSenseEnabled() const		{ return settings.value("settings/dualsense_enabled", false).toBool(); }
+		void SetDualSenseEnabled(bool enabled)	{ settings.setValue("settings/dualsense_enabled", enabled); }
 
 		ChiakiVideoResolutionPreset GetResolution() const;
 		void SetResolution(ChiakiVideoResolutionPreset resolution);

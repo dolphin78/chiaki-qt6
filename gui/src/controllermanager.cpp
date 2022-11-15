@@ -58,38 +58,37 @@ static QSet<QString> chiaki_motion_controller_guids({
 	"030000004c050000cc09000000010000",
 	"03000000c01100000140000000010000",
 	// Sony on Windows
-	// Updated from https://github.com/gabomdq/SDL_GameControllerDB
-	"030000008f0e00000910000000000000",
-	"03000000317300000100000000000000",
-	"03000000120c00000807000000000000",
-	"03000000120c0000111e000000000000",
-	"03000000120c0000121e000000000000",
-	"03000000120c0000130e000000000000",
-	"03000000120c0000150e000000000000",
-	"03000000120c0000180e000000000000",
-	"03000000120c0000181e000000000000",
-	"03000000120c0000191e000000000000",
-	"03000000120c00001e0e000000000000",
-	"03000000120c0000a957000000000000",
-	"03000000120c0000aa57000000000000",
-	"03000000120c0000f10e000000000000",
-	"03000000120c0000f21c000000000000",
-	"03000000120c0000f31c000000000000",
-	"03000000120c0000f41c000000000000",
-	"03000000120c0000f51c000000000000",
-	"03000000120c0000f70e000000000000",
-	"03000000120e0000120c000000000000",
-	"03000000160e0000120c000000000000",
-	"030000001a1e0000120c000000000000",
 	"030000004c050000a00b000000000000",
 	"030000004c050000c405000000000000",
 	"030000004c050000cc09000000000000",
-	"030000004c050000e60c000000000000",
 	"03000000250900000500000000000000",
 	"030000004c0500006802000000000000",
 	"03000000632500007505000000000000",
 	"03000000888800000803000000000000",
-	"030000008f0e00001431000000000000"
+	"030000008f0e00001431000000000000",
+});
+
+static QSet<QString> chiaki_dualsense_controller_guids({
+	// Linux
+	"030000004c050000e60c000000010000",
+	"030000004c050000e60c000000016800",
+	"030000004c050000e60c000011010000",
+	"030000004c050000e60c000011810000",
+	"050000004c050000e60c000000010000",
+	"050000004c050000e60c000000810000",
+	// macOS
+	"050000004c050000e60c000000010000",
+	// Windows
+	"030000004c050000e60c000000007700",
+	"030000004c050000e60c000000000000",
+	// OpenBSD
+	"030000004c050000e60c000000010000",
+	// Android
+	"050000004c050000e60c0000fffe3f00",
+	"050000004c050000e60c0000ffff3f00",
+	// iOS
+	"050000004c050000e60c0000df870000",
+	"050000004c050000e60c0000ff870000",
 });
 
 static ControllerManager *instance = nullptr;
@@ -108,6 +107,9 @@ ControllerManager::ControllerManager(QObject *parent)
 {
 #ifdef CHIAKI_GUI_ENABLE_SDL_GAMECONTROLLER
 	SDL_SetMainReady();
+	SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS4_RUMBLE, "1");
+	SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS5_RUMBLE, "1");
+	SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
 	if(SDL_Init(SDL_INIT_GAMECONTROLLER) < 0)
 	{
 		const char *err = SDL_GetError();
@@ -241,8 +243,12 @@ Controller::Controller(int device_id, ControllerManager *manager) : QObject(mana
 Controller::~Controller()
 {
 #ifdef CHIAKI_GUI_ENABLE_SDL_GAMECONTROLLER
-	if(controller)
+	if(controller) {
+		// Clear trigger effects, SDL doesn't do it automatically
+		const uint8_t clear_effect[10] = { 0 };
+		this->SetTriggerEffects(0x05, clear_effect, 0x05, clear_effect);
 		SDL_GameControllerClose(controller);
+	}
 #endif
 	manager->ControllerClosed(this);
 }
@@ -308,7 +314,6 @@ ChiakiControllerState Controller::GetState()
 	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_START) ? CHIAKI_CONTROLLER_BUTTON_OPTIONS : 0;
 	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_BACK) ? CHIAKI_CONTROLLER_BUTTON_SHARE : 0;
 	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_GUIDE) ? CHIAKI_CONTROLLER_BUTTON_PS : 0;
-	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_TOUCHPAD) ? CHIAKI_CONTROLLER_BUTTON_TOUCHPAD : 0;
 	state.l2_state = (uint8_t)(SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_TRIGGERLEFT) >> 7);
 	state.r2_state = (uint8_t)(SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_TRIGGERRIGHT) >> 7);
 	state.left_x = SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_LEFTX);
@@ -326,5 +331,33 @@ void Controller::SetRumble(uint8_t left, uint8_t right)
 	if(!controller)
 		return;
 	SDL_GameControllerRumble(controller, (uint16_t)left << 8, (uint16_t)right << 8, 5000);
+#endif
+}
+
+void Controller::SetTriggerEffects(uint8_t type_left, const uint8_t *data_left, uint8_t type_right, const uint8_t *data_right)
+{
+#ifdef CHIAKI_GUI_ENABLE_SDL_GAMECONTROLLER
+	if(!controller)
+		return;
+	// TODO: Check if controller is a DualSense?
+	DS5EffectsState_t state;
+	SDL_zero(state);
+	state.ucEnableBits1 |= (0x04 /* left trigger */ | 0x08 /* right trigger */);
+	state.rgucLeftTriggerEffect[0] = type_left;
+	SDL_memcpy(state.rgucLeftTriggerEffect + 1, data_left, 10);
+	state.rgucRightTriggerEffect[0] = type_right;
+	SDL_memcpy(state.rgucRightTriggerEffect + 1, data_right, 10);
+	SDL_GameControllerSendEffect(controller, &state, sizeof(state));
+#endif
+}
+
+bool Controller::IsDualSense() {
+#ifdef CHIAKI_GUI_ENABLE_SDL_GAMECONTROLLER
+	if(!controller)
+		return false;
+	auto guid = SDL_JoystickGetGUID(SDL_GameControllerGetJoystick(controller));
+	char guid_str[256];
+	SDL_JoystickGetGUIDString(guid, guid_str, sizeof(guid_str));
+	return chiaki_dualsense_controller_guids.contains(guid_str);
 #endif
 }

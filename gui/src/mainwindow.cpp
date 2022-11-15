@@ -82,7 +82,7 @@ MainWindow::MainWindow(Settings *settings, QWidget *parent)
 	auto layout = new QVBoxLayout();
 	main_widget->setLayout(layout);
 	setCentralWidget(main_widget);
-	//layout->setMargin(0);
+	layout->setMargin(0);
 
 	auto LoadIcon = [this](const QString &filename) {
 		return QIcon(new IconEngine(filename));
@@ -249,7 +249,7 @@ void MainWindow::ServerItemWidgetTriggered()
 		}
 
 		QString host = server.GetHostAddr();
-		StreamSessionConnectInfo info(settings, server.registered_host.GetTarget(), host, server.registered_host.GetRPRegistKey(), server.registered_host.GetRPKey(), false);
+		StreamSessionConnectInfo info(settings, server.registered_host.GetTarget(), host, server.registered_host.GetRPRegistKey(), server.registered_host.GetRPKey(), false, settings->GetDualSenseEnabled());
 		new StreamWindow(info);
 	}
 	else
@@ -356,6 +356,6 @@ void MainWindow::UpdateServerWidgets()
 		grid_widget->AddWidget(widget);
 	}
 
-	for(size_t i=0; i < server_item_widgets.size(); i++)
+	for(size_t i=0; i<server_item_widgets.count(); i++)
 		server_item_widgets[i]->Update(display_servers[i]);
 }
