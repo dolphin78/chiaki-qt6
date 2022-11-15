@@ -360,7 +360,7 @@ ChiakiControllerState Controller::GetState()
 	
 	state.touches[0].x = x * 1914;
 	state.touches[0].y = y * 940;
-	state.touches[0].id = state - 1;
+	state.touches[0].id = touch_state - 1;
 	
 	//SDL_GameControllerGetSensorData(SDL_GameController *gamecontroller, SDL_SensorType type, float *data, int num_values);
 	
