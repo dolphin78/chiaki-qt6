@@ -188,6 +188,7 @@ void ControllerManager::HandleEvents()
                         case SDL_CONTROLLERTOUCHPADDOWN:
                         case SDL_CONTROLLERTOUCHPADMOTION:
                         case SDL_CONTROLLERTOUCHPADUP:
+/*
                                 SDL_Log("Controller %d touchpad %d finger %d %s %.2f, %.2f, %.2f\n",
                                     event.ctouchpad.which,
                                     event.ctouchpad.touchpad,
@@ -198,9 +199,11 @@ void ControllerManager::HandleEvents()
                                     event.ctouchpad.x,
                                     event.ctouchpad.y,
                                     event.ctouchpad.pressure);
+*/
 				ControllerEvent(event.ctouchpad.which);
                                 break;
                         case SDL_CONTROLLERSENSORUPDATE:
+/*				
                                 SDL_Log("Controller %d sensor %s: %.2f, %.2f, %.2f\n",
                                     event.csensor.which,
                                     event.csensor.sensor == SDL_SENSOR_ACCEL ? "accelerometer" :
@@ -208,6 +211,7 @@ void ControllerManager::HandleEvents()
                                     event.csensor.data[0],
                                     event.csensor.data[1],
                                     event.csensor.data[2]);
+*/
 				ControllerEvent(event.csensor.which);
                                 break;				
 		}
@@ -345,6 +349,14 @@ ChiakiControllerState Controller::GetState()
 	state.right_x = SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_RIGHTX);
 	state.right_y = SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_RIGHTY);
 
+        Uint8 state;
+        float x;
+	float y;
+	float pressure;
+	// int SDL_GameControllerGetTouchpadFinger(SDL_GameController *gamecontroller, int touchpad, int finger, Uint8 *state, float *x, float *y, float *pressure);
+	SDL_GameControllerGetTouchpadFinger(controller, 0, 0, &state, &x, &y, &pressure);
+	
+        SDL_Log("Controller state %d,  x:%.2f, y:%.2f, pressure:%.2f\n", state, x, y, pressure);
 #endif
 	return state;
 }
