@@ -118,7 +118,6 @@ ControllerManager::ControllerManager(QObject *parent)
 	connect(timer, &QTimer::timeout, this, &ControllerManager::HandleEvents);
 	timer->start(UPDATE_INTERVAL_MS);
 #endif
-	chiaki_orientation_tracker_init(&orient_tracker);
 
 	UpdateAvailableControllers();
 }
@@ -269,6 +268,7 @@ Controller::Controller(int device_id, ControllerManager *manager) : QObject(mana
 			break;
 		}
 	}
+	chiaki_orientation_tracker_init(&orient_tracker);
 #endif
 }
 
@@ -350,14 +350,14 @@ ChiakiControllerState Controller::GetState()
 	state.right_x = SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_RIGHTX);
 	state.right_y = SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_RIGHTY);
 
-        Uint8 touch_state;
-        float x;
+	Uint8 touch_state;
+	float x;
 	float y;
 	float pressure;
 	// int SDL_GameControllerGetTouchpadFinger(SDL_GameController *gamecontroller, int touchpad, int finger, Uint8 *state, float *x, float *y, float *pressure);
 	SDL_GameControllerGetTouchpadFinger(controller, 0, 0, &touch_state, &x, &y, &pressure);
 	
-        //SDL_Log("Controller state %d,  x:%.2f, y:%.2f, pressure:%.2f\n", touch_state, x, y, pressure);
+	//SDL_Log("Controller state %d,  x:%.2f, y:%.2f, pressure:%.2f\n", touch_state, x, y, pressure);
 	
 	state.touches[0].x = x * 1914;
 	state.touches[0].y = y * 940;
@@ -380,7 +380,7 @@ ChiakiControllerState Controller::GetState()
 	
 	SDL_Log("Controller gyro: x:%.2f, y:%.2f, z:%.2f, accel: x:%.2f, y:%.2f, z:%.2f, orient: x:%.2f, y:%.2f, z:%.2f",
 				state.gyro_x, state.gyro_y, state.gyro_z,
-				state.accel_x, state.accel_y, state.accel_z
+				state.accel_x, state.accel_y, state.accel_z,
 				state.orient_x, state.orient_y, state.orient_z);
 
 #endif

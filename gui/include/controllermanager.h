@@ -28,7 +28,6 @@ class ControllerManager : public QObject
 		QSet<SDL_JoystickID> available_controllers;
 #endif
 		QMap<int, Controller *> open_controllers;
-		ChiakiOrientationTracker orient_tracker;
 		
 		void ControllerClosed(Controller *controller);
 
@@ -63,6 +62,7 @@ class Controller : public QObject
 
 		ControllerManager *manager;
 		int id;
+		ChiakiOrientationTracker orient_tracker;
 
 #ifdef CHIAKI_GUI_ENABLE_SDL_GAMECONTROLLER
 		SDL_GameController *controller;
