@@ -379,7 +379,7 @@ ChiakiControllerState Controller::GetState()
 	SDL_Log("(1) Controller gyro: x:%.2f, y:%.2f, z:%.2f, accel: x:%.2f, y:%.2f, z:%.2f, orient: x:%.2f, y:%.2f, z:%.2f, w:%.2f",
 				orient_tracker.gyro_x, orient_tracker.gyro_y, orient_tracker.gyro_z,
 				orient_tracker.accel_x, orient_tracker.accel_y, orient_tracker.accel_z,
-				orient_tracker->orient.x, orient_tracker->orient.y, orient_tracker->orient.z, orient_tracker->orient.w);
+				orient_tracker.orient.x, orient_tracker.orient.y, orient_tracker.orient.z, orient_tracker.orient.w);
 
 	chiaki_orientation_tracker_apply_to_controller_state(&orient_tracker, &state);
 	
