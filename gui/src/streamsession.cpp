@@ -395,7 +395,7 @@ void StreamSession::SendFeedbackState()
 void StreamSession::InitAudio(unsigned int channels, unsigned int rate)
 {
 	delete audio_output;
-	audio_output = nullptr;
+	QAudioSink* audio_output = nullptr;
 	audio_io = nullptr;
 
 	QAudioFormat audio_format = audio_out_device_info.preferredFormat();
