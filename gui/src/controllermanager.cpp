@@ -123,16 +123,6 @@ ControllerManager::ControllerManager(QObject *parent)
 	auto timer = new QTimer(this);
 	connect(timer, &QTimer::timeout, this, &ControllerManager::HandleEvents);
 	timer->start(UPDATE_INTERVAL_MS);
-
-	if (!(SDL_GameControllerHasSensor(controller, SDL_SENSOR_ACCEL) && SDL_GameControllerHasSensor(controller, SDL_SENSOR_GYRO)))
-	{
-		int msgboxID = MessageBox(
-			NULL,
-			(LPCWSTR)L"DS4/DS5 Remapping Software is detected.\n\nPlease exit DS4Windows or InputMapper and restart Chiaki\nto enable motion controls.",
-			(LPCWSTR)L"Motion Controls Disabled",
-			MB_ICONWARNING | MB_OK
-		);
-	}
 #endif
 
 	UpdateAvailableControllers();
