@@ -123,6 +123,16 @@ ControllerManager::ControllerManager(QObject *parent)
 	auto timer = new QTimer(this);
 	connect(timer, &QTimer::timeout, this, &ControllerManager::HandleEvents);
 	timer->start(UPDATE_INTERVAL_MS);
+
+	if (!(SDL_GameControllerHasSensor(controller, SDL_SENSOR_ACCEL) && SDL_GameControllerHasSensor(controller, SDL_SENSOR_GYRO)))
+	{
+		int msgboxID = MessageBox(
+			NULL,
+			(LPCWSTR)L"DS4/DS5 Remapping Software is detected.\n\nPlease exit DS4Windows or InputMapper and restart Chiaki\nto enable motion controls.",
+			(LPCWSTR)L"Motion Controls Disabled",
+			MB_ICONWARNING | MB_OK
+		);
+	}
 #endif
 
 	UpdateAvailableControllers();
@@ -191,35 +201,14 @@ void ControllerManager::HandleEvents()
 			case SDL_CONTROLLERAXISMOTION:
 				ControllerEvent(event.caxis.which);
 				break;
-                        case SDL_CONTROLLERTOUCHPADDOWN:
-                        case SDL_CONTROLLERTOUCHPADMOTION:
-                        case SDL_CONTROLLERTOUCHPADUP:
-/*
-                                SDL_Log("Controller %d touchpad %d finger %d %s %.2f, %.2f, %.2f\n",
-                                    event.ctouchpad.which,
-                                    event.ctouchpad.touchpad,
-                                    event.ctouchpad.finger,
-                                    (event.type == SDL_CONTROLLERTOUCHPADDOWN ? "pressed at" :
-                                    (event.type == SDL_CONTROLLERTOUCHPADUP ? "released at" :
-                                    "moved to")),
-                                    event.ctouchpad.x,
-                                    event.ctouchpad.y,
-                                    event.ctouchpad.pressure);
-*/
+			case SDL_CONTROLLERTOUCHPADDOWN:
+			case SDL_CONTROLLERTOUCHPADMOTION:
+			case SDL_CONTROLLERTOUCHPADUP:
 				ControllerEvent(event.ctouchpad.which);
-                                break;
-                        case SDL_CONTROLLERSENSORUPDATE:
-/*				
-                                SDL_Log("Controller %d sensor %s: %.2f, %.2f, %.2f\n",
-                                    event.csensor.which,
-                                    event.csensor.sensor == SDL_SENSOR_ACCEL ? "accelerometer" :
-                                    event.csensor.sensor == SDL_SENSOR_GYRO ? "gyro" : "unknown",
-                                    event.csensor.data[0],
-                                    event.csensor.data[1],
-                                    event.csensor.data[2]);
-*/
+				break;
+			case SDL_CONTROLLERSENSORUPDATE:
 				ControllerEvent(event.csensor.which);
-                                break;				
+				break;
 		}
 	}
 #endif
@@ -267,10 +256,10 @@ Controller::Controller(int device_id, ControllerManager *manager) : QObject(mana
 		if(SDL_JoystickGetDeviceInstanceID(i) == device_id)
 		{
 			controller = SDL_GameControllerOpen(i);
-                        SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS4_RUMBLE, "1");
-                        SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS5, "1");
+			SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS4_RUMBLE, "1");
+			SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS5, "1");
 			SDL_GameControllerSetSensorEnabled(controller, SDL_SENSOR_ACCEL, SDL_TRUE);
-                        SDL_GameControllerSetSensorEnabled(controller, SDL_SENSOR_GYRO, SDL_TRUE);
+			SDL_GameControllerSetSensorEnabled(controller, SDL_SENSOR_GYRO, SDL_TRUE);
 			break;
 		}
 	}
@@ -357,50 +346,34 @@ ChiakiControllerState Controller::GetState()
 	state.right_y = SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_RIGHTY);
 
 	Uint8 touch_state;
-	float x;
-	float y;
-	float pressure;
-	// int SDL_GameControllerGetTouchpadFinger(SDL_GameController *gamecontroller, int touchpad, int finger, Uint8 *state, float *x, float *y, float *pressure);
+	float x, y, pressure;
 	SDL_GameControllerGetTouchpadFinger(controller, 0, 0, &touch_state, &x, &y, &pressure);
-	
-	//SDL_Log("Controller state %d,  x:%.2f, y:%.2f, pressure:%.2f\n", touch_state, x, y, pressure);
 	
 	state.touches[0].x = x * 1920;
 	state.touches[0].y = y * 1080;
 	state.touches[0].id = touch_state - 1;
 	
-	//SDL_GameControllerGetSensorData(SDL_GameController *gamecontroller, SDL_SensorType type, float *data, int num_values);
-	
-	float gyro_data[3];
-	SDL_GameControllerGetSensorData(controller, SDL_SENSOR_GYRO, &gyro_data[0], 3);
+	if(SDL_GameControllerHasSensor(controller, SDL_SENSOR_ACCEL) && SDL_GameControllerHasSensor(controller, SDL_SENSOR_GYRO))
+	{
+		float gyro_data[3], accel_data[3];
+		SDL_GameControllerGetSensorData(controller, SDL_SENSOR_GYRO, &gyro_data[0], 3);
+		SDL_GameControllerGetSensorData(controller, SDL_SENSOR_ACCEL, &accel_data[0], 3);
 
-	float accel_data[3];
-	SDL_GameControllerGetSensorData(controller, SDL_SENSOR_ACCEL, &accel_data[0], 3);
+		uint64_t microsec_since_epoch = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
+		// Normalize accelerometer data
+		float recip_norm = inv_sqrt(accel_data[0] * accel_data[0] + accel_data[1] * accel_data[1] + accel_data[2] * accel_data[2]);
+		accel_data[0] *= recip_norm;
+		accel_data[1] *= recip_norm;
+		accel_data[2] *= recip_norm;
+		
+		chiaki_orientation_tracker_update(&orient_tracker,
+			gyro_data[0], gyro_data[1], gyro_data[2],
+			accel_data[0], accel_data[1], accel_data[2],
+			microsec_since_epoch);
 
-	uint64_t microsec_since_epoch = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-
-    float recip_norm = inv_sqrt(accel_data[0] * accel_data[0] + accel_data[1] * accel_data[1] + accel_data[2] * accel_data[2]);
-	
-	chiaki_orientation_tracker_update(&orient_tracker,
-		gyro_data[0], gyro_data[1], gyro_data[2],
-		accel_data[0] * recip_norm, accel_data[1] * recip_norm, accel_data[2] * recip_norm,
-		microsec_since_epoch);
-
-/*	SDL_Log("(1) Controller gyro: x:%.2f, y:%.2f, z:%.2f, accel: x:%.2f, y:%.2f, z:%.2f, orient: x:%.2f, y:%.2f, z:%.2f, w:%.2f, idx: %d",
-				orient_tracker.gyro_x, orient_tracker.gyro_y, orient_tracker.gyro_z,
-				orient_tracker.accel_x, orient_tracker.accel_y, orient_tracker.accel_z,
-				orient_tracker.orient.x, orient_tracker.orient.y, orient_tracker.orient.z, orient_tracker.orient.w, orient_tracker.sample_index);
-*/
-	chiaki_orientation_tracker_apply_to_controller_state(&orient_tracker, &state);
-
-
-/*	SDL_Log("(2) Controller gyro: x:%.2f, y:%.2f, z:%.2f, accel: x:%.2f, y:%.2f, z:%.2f, orient: x:%.2f, y:%.2f, z:%.2f, w:%.2f",
-				state.gyro_x, state.gyro_y, state.gyro_z,
-				state.accel_x, state.accel_y, state.accel_z,
-				state.orient_x, state.orient_y, state.orient_z, state.orient_w);
-*/
-
+		chiaki_orientation_tracker_apply_to_controller_state(&orient_tracker, &state);
+	}
 #endif
 	return state;
 }
