@@ -383,10 +383,9 @@ ChiakiControllerState Controller::GetState()
 
 	chiaki_orientation_tracker_apply_to_controller_state(&orient_tracker, &state);
 
-	state.orient_x = 3.14159f / 4.0f;
-	state.orient_y = 3.14159f / 4.0f;
-	state.orient_z = 3.14159f / 4.0f;
-//	state.orient_w = 3.14159f / 4.0f;
+	state.orient_x =  0.56099f;
+	state.orient_y =  0.43046f;
+	state.orient_z = -0.092296f;
 
 	SDL_Log("(2) Controller gyro: x:%.2f, y:%.2f, z:%.2f, accel: x:%.2f, y:%.2f, z:%.2f, orient: x:%.2f, y:%.2f, z:%.2f",
 				state.gyro_x, state.gyro_y, state.gyro_z,
