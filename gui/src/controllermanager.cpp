@@ -97,6 +97,11 @@ static ControllerManager *instance = nullptr;
 
 #define UPDATE_INTERVAL_MS 4
 
+static float inv_sqrt(float x)
+{
+	return 1.0f / sqrt(x);
+}
+
 ControllerManager *ControllerManager::GetInstance()
 {
 	if(!instance)
@@ -375,9 +380,11 @@ ChiakiControllerState Controller::GetState()
 
 	uint64_t microsec_since_epoch = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
+    float recip_norm = inv_sqrt(accel_data[0] * accel_data[0] + accel_data[1] * accel_data[1] + accel_data[2] * accel_data[2]);
+	
 	chiaki_orientation_tracker_update(&orient_tracker,
 		gyro_data[0], gyro_data[1], gyro_data[2],
-		accel_data[0], accel_data[1], accel_data[2],
+		accel_data[0] * recip_norm, accel_data[1] * recip_norm, accel_data[2] * recip_norm,
 		microsec_since_epoch);
 
 /*	SDL_Log("(1) Controller gyro: x:%.2f, y:%.2f, z:%.2f, accel: x:%.2f, y:%.2f, z:%.2f, orient: x:%.2f, y:%.2f, z:%.2f, w:%.2f, idx: %d",
@@ -388,11 +395,11 @@ ChiakiControllerState Controller::GetState()
 	chiaki_orientation_tracker_apply_to_controller_state(&orient_tracker, &state);
 
 
-	SDL_Log("(2) Controller gyro: x:%.2f, y:%.2f, z:%.2f, accel: x:%.2f, y:%.2f, z:%.2f, orient: x:%.2f, y:%.2f, z:%.2f, w:%.2f",
+/*	SDL_Log("(2) Controller gyro: x:%.2f, y:%.2f, z:%.2f, accel: x:%.2f, y:%.2f, z:%.2f, orient: x:%.2f, y:%.2f, z:%.2f, w:%.2f",
 				state.gyro_x, state.gyro_y, state.gyro_z,
 				state.accel_x, state.accel_y, state.accel_z,
 				state.orient_x, state.orient_y, state.orient_z, state.orient_w);
-
+*/
 
 #endif
 	return state;
