@@ -90,19 +90,19 @@ StreamSession::StreamSession(const StreamSessionConnectInfo &connect_info, QObje
 	audio_out_device_info = QMediaDevices::defaultAudioOutput();
 	CHIAKI_LOGV(log.GetChiakiLog(), "Selected default audio Device: %s", qPrintable(audio_out_device_info.description()));
     
-	//audio_out_device_info = QAudioDeviceInfo::defaultOutputDevice();
-	// if(!connect_info.audio_out_device.isEmpty())
-	// {
-	// 	//for(QAudioDeviceInfo di : QAudioDeviceInfo::availableDevices(QAudio::AudioOutput))
-	// 	for(QAudioDeviceInfo di : QAudioDeviceInfo::availableDevices(QAudio::AudioOutput))
-	// 	{
-	// 		if(di.deviceName() == connect_info.audio_out_device)
-	// 		{
-	// 			audio_out_device_info = di;
-	// 			break;
-	// 		}
-	// 	}
-	// }
+	if(!connect_info.audio_out_device.isEmpty())
+	{
+		for(QAudioDevice di : QMediaDevices::audioOutputs())
+		{
+			CHIAKI_LOGV(log.GetChiakiLog(), "Audio Device: %s", qPrintable(di.description()));
+			if(di.description() == connect_info.audio_out_device)
+			{
+				audio_out_device_info = di;
+				CHIAKI_LOGV(log.GetChiakiLog(), "Selected Audio Device: %s", qPrintable(audio_out_device_info.description()));
+				break;
+			}
+		}
+	}
 
 	chiaki_opus_decoder_init(&opus_decoder, log.GetChiakiLog());
 	audio_buffer_size = connect_info.audio_buffer_size;
