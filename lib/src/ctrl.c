@@ -488,12 +488,12 @@ static void ctrl_message_received(ChiakiCtrl *ctrl, uint16_t msg_type, uint8_t *
 
 static void ctrl_enable_optional_features(ChiakiCtrl *ctrl)
 {
-	if(ctrl->session->connect_info.enable_dualsense)
-	{
+	//if(ctrl->session->connect_info.enable_dualsense)
+	//{
 		CHIAKI_LOGI(ctrl->session->log, "Enabling DualSense features");
 		const uint8_t enable[3] = { 0x00, 0x40, 0x00 };
 		ctrl_message_send(ctrl, 0x13, enable, 3);
-	}
+	//}
 	if(ctrl->session->connect_info.enable_keyboard)
 	{
 		CHIAKI_LOGI(ctrl->session->log, "Enabling Keyboard");
