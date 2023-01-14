@@ -29,22 +29,22 @@ for:
       - path: Chiaki-PDB
         name: Chiaki-PDB
 
-  - matrix:
-      only:
-        - image: macOS
+#  - matrix:
+#      only:
+#        - image: macOS
 
-    install:
-      - git submodule update --init --recursive
-      - sudo pip3 install protobuf
-      - brew install qt@5 opus openssl@1.1 nasm sdl2 protobuf
-      - scripts/build-ffmpeg.sh
+#    install:
+#      - git submodule update --init --recursive
+#      - sudo pip3 install protobuf
+#      - brew install qt@6 opus openssl@1.1 nasm sdl2 protobuf
+#      - scripts/build-ffmpeg.sh
 
-    build_script:
-      - export CMAKE_PREFIX_PATH="`pwd`/ffmpeg-prefix;/usr/local/opt/openssl@1.1;/usr/local/opt/qt@5"
-      - scripts/build-common.sh
-      - cp -a build/gui/chiaki.app Chiaki.app
-      - /usr/local/opt/qt@5/bin/macdeployqt Chiaki.app -dmg
+#    build_script:
+#      - export CMAKE_PREFIX_PATH="`pwd`/ffmpeg-prefix;/usr/local/opt/openssl@1.1;/usr/local/opt/qt@6"
+#      - scripts/build-common.sh
+#      - cp -a build/gui/chiaki.app Chiaki.app
+#      - /usr/local/opt/qt@6/bin/macdeployqt Chiaki.app -dmg
 
-    artifacts:
-      - path: Chiaki.dmg
-        name: Chiaki
+#    artifacts:
+#      - path: Chiaki.dmg
+#        name: Chiaki

@@ -10,7 +10,7 @@ mkdir yasm && cd yasm || exit 1
 wget http://www.tortall.net/projects/yasm/releases/yasm-1.3.0-win64.exe && mv yasm-1.3.0-win64.exe yasm.exe || exit 1
 cd .. || exit 1
 
-export PATH="$PWD/ninja:$PWD/yasm:/c/Qt/5.12/msvc2017_64/bin:$PATH"
+export PATH="$PWD/ninja:$PWD/yasm:/c/Qt/6.4/msvc2019_64/bin:$PATH"
 
 scripts/build-ffmpeg.sh . --target-os=win64 --arch=x86_64 --toolchain=msvc || exit 1
 
@@ -26,24 +26,27 @@ ninja || exit 1
 ninja install || exit 1
 cd ../.. || exit 1
 
-wget https://mirror.firedaemon.com/OpenSSL/openssl-1.1.1n.zip && 7z x openssl-1.1.1n.zip || exit 1
+wget https://mirror.firedaemon.com/OpenSSL/openssl-1.1.1s.zip && 7z x openssl-1.1.1s.zip || exit 1
 
-wget https://www.libsdl.org/release/SDL2-devel-2.0.10-VC.zip && 7z x SDL2-devel-2.0.10-VC.zip || exit 1
-export SDL_ROOT="$APPVEYOR_BUILD_FOLDER/SDL2-2.0.10" || exit 1
+wget https://www.libsdl.org/release/SDL2-devel-2.26.0-VC.zip && 7z x SDL2-devel-2.26.0-VC.zip || exit 1
+export SDL_ROOT="$APPVEYOR_BUILD_FOLDER/SDL2-2.26.0" || exit 1
 export SDL_ROOT=${SDL_ROOT//[\\]//} || exit 1
 echo "set(SDL2_INCLUDE_DIRS \"$SDL_ROOT/include\")
 set(SDL2_LIBRARIES \"$SDL_ROOT/lib/x64/SDL2.lib\")
 set(SDL2_LIBDIR \"$SDL_ROOT/lib/x64\")" > "$SDL_ROOT/SDL2Config.cmake" || exit 1
 
 mkdir protoc && cd protoc || exit 1
-wget https://github.com/protocolbuffers/protobuf/releases/download/v3.9.1/protoc-3.9.1-win64.zip && 7z x protoc-3.9.1-win64.zip || exit 1
+# wget https://github.com/protocolbuffers/protobuf/releases/download/v3.9.1/protoc-3.9.1-win64.zip && 7z x protoc-3.9.1-win64.zip || exit 1
+wget https://github.com/protocolbuffers/protobuf/releases/download/v3.20.2/protoc-3.20.2-win64.zip && 7z x protoc-3.20.2-win64.zip || exit 1
 cd .. || exit 1
 export PATH="$PWD/protoc/bin:$PATH" || exit 1
 
 PYTHON="C:/Python37/python.exe"
 "$PYTHON" -m pip install protobuf || exit 1
 
-QT_PATH="C:/Qt/5.15/msvc2019_64"
+
+
+_PATH="C:/Qt/6.4/msvc2019_64"
 
 COPY_DLLS="$PWD/openssl-1.1/x64/bin/libcrypto-1_1-x64.dll $PWD/openssl-1.1/x64/bin/libssl-1_1-x64.dll $SDL_ROOT/lib/x64/SDL2.dll"
 
