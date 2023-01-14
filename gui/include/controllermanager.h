@@ -4,6 +4,7 @@
 #define CHIAKI_CONTROLLERMANAGER_H
 
 #include <chiaki/controller.h>
+#include <chiaki/orientation.h>
 
 #include <QObject>
 #include <QSet>
@@ -61,6 +62,7 @@ class Controller : public QObject
 
 		ControllerManager *manager;
 		int id;
+		ChiakiOrientationTracker orient_tracker;
 
 #ifdef CHIAKI_GUI_ENABLE_SDL_GAMECONTROLLER
 		SDL_GameController *controller;

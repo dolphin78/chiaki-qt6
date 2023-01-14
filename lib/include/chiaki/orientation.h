@@ -32,13 +32,13 @@ typedef struct chiaki_orientation_tracker_t
 	float gyro_x, gyro_y, gyro_z;
 	float accel_x, accel_y, accel_z;
 	ChiakiOrientation orient;
-	uint32_t timestamp;
+	uint64_t timestamp;
 	uint64_t sample_index;
 } ChiakiOrientationTracker;
 
 CHIAKI_EXPORT void chiaki_orientation_tracker_init(ChiakiOrientationTracker *tracker);
 CHIAKI_EXPORT void chiaki_orientation_tracker_update(ChiakiOrientationTracker *tracker,
-		float gx, float gy, float gz, float ax, float ay, float az, uint32_t timestamp_us);
+		float gx, float gy, float gz, float ax, float ay, float az, uint64_t timestamp_us);
 CHIAKI_EXPORT void chiaki_orientation_tracker_apply_to_controller_state(ChiakiOrientationTracker *tracker,
 		ChiakiControllerState *state);
 

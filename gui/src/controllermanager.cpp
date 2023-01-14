@@ -6,6 +6,7 @@
 #include <QMessageBox>
 #include <QByteArray>
 #include <QTimer>
+#include <chrono>
 
 #ifdef CHIAKI_GUI_ENABLE_SDL_GAMECONTROLLER
 #include <SDL.h>
@@ -94,6 +95,11 @@ static QSet<QString> chiaki_dualsense_controller_guids({
 static ControllerManager *instance = nullptr;
 
 #define UPDATE_INTERVAL_MS 4
+
+static float inv_sqrt(float x)
+{
+	return 1.0f / sqrt(x);
+}
 
 ControllerManager *ControllerManager::GetInstance()
 {
@@ -187,6 +193,14 @@ void ControllerManager::HandleEvents()
 			case SDL_CONTROLLERAXISMOTION:
 				ControllerEvent(event.caxis.which);
 				break;
+			case SDL_CONTROLLERTOUCHPADDOWN:
+			case SDL_CONTROLLERTOUCHPADMOTION:
+			case SDL_CONTROLLERTOUCHPADUP:
+				ControllerEvent(event.ctouchpad.which);
+				break;
+			case SDL_CONTROLLERSENSORUPDATE:
+				ControllerEvent(event.csensor.which);
+				break;
 		}
 	}
 #endif
@@ -234,9 +248,14 @@ Controller::Controller(int device_id, ControllerManager *manager) : QObject(mana
 		if(SDL_JoystickGetDeviceInstanceID(i) == device_id)
 		{
 			controller = SDL_GameControllerOpen(i);
+			SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS4_RUMBLE, "1");
+			SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS5, "1");
+			SDL_GameControllerSetSensorEnabled(controller, SDL_SENSOR_ACCEL, SDL_TRUE);
+			SDL_GameControllerSetSensorEnabled(controller, SDL_SENSOR_GYRO, SDL_TRUE);
 			break;
 		}
 	}
+	chiaki_orientation_tracker_init(&orient_tracker);
 #endif
 }
 
@@ -314,6 +333,7 @@ ChiakiControllerState Controller::GetState()
 	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_START) ? CHIAKI_CONTROLLER_BUTTON_OPTIONS : 0;
 	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_BACK) ? CHIAKI_CONTROLLER_BUTTON_SHARE : 0;
 	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_GUIDE) ? CHIAKI_CONTROLLER_BUTTON_PS : 0;
+	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_TOUCHPAD) ? CHIAKI_CONTROLLER_BUTTON_TOUCHPAD : 0;
 	state.l2_state = (uint8_t)(SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_TRIGGERLEFT) >> 7);
 	state.r2_state = (uint8_t)(SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_TRIGGERRIGHT) >> 7);
 	state.left_x = SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_LEFTX);
@@ -321,6 +341,35 @@ ChiakiControllerState Controller::GetState()
 	state.right_x = SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_RIGHTX);
 	state.right_y = SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_RIGHTY);
 
+	Uint8 touch_state;
+	float x, y, pressure;
+	SDL_GameControllerGetTouchpadFinger(controller, 0, 0, &touch_state, &x, &y, &pressure);
+	
+	state.touches[0].x = x * 1920;
+	state.touches[0].y = y * 1080;
+	state.touches[0].id = touch_state - 1;
+	
+	if(SDL_GameControllerHasSensor(controller, SDL_SENSOR_ACCEL) && SDL_GameControllerHasSensor(controller, SDL_SENSOR_GYRO))
+	{
+		float gyro_data[3], accel_data[3];
+		SDL_GameControllerGetSensorData(controller, SDL_SENSOR_GYRO, &gyro_data[0], 3);
+		SDL_GameControllerGetSensorData(controller, SDL_SENSOR_ACCEL, &accel_data[0], 3);
+
+		uint64_t microsec_since_epoch = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+
+		// Normalize accelerometer data
+		float recip_norm = inv_sqrt(accel_data[0] * accel_data[0] + accel_data[1] * accel_data[1] + accel_data[2] * accel_data[2]);
+		accel_data[0] *= recip_norm;
+		accel_data[1] *= recip_norm;
+		accel_data[2] *= recip_norm;
+		
+		chiaki_orientation_tracker_update(&orient_tracker,
+			gyro_data[0], gyro_data[1], gyro_data[2],
+			accel_data[0], accel_data[1], accel_data[2],
+			microsec_since_epoch);
+
+		chiaki_orientation_tracker_apply_to_controller_state(&orient_tracker, &state);
+	}
 #endif
 	return state;
 }

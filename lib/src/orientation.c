@@ -135,7 +135,7 @@ CHIAKI_EXPORT void chiaki_orientation_tracker_init(ChiakiOrientationTracker *tra
 }
 
 CHIAKI_EXPORT void chiaki_orientation_tracker_update(ChiakiOrientationTracker *tracker,
-		float gx, float gy, float gz, float ax, float ay, float az, uint32_t timestamp_us)
+		float gx, float gy, float gz, float ax, float ay, float az, uint64_t timestamp_us)
 {
 	tracker->gyro_x = gx;
 	tracker->gyro_y = gy;
